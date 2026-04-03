@@ -97,50 +97,43 @@ config/logging.py 미구현, 프롬프트 인젝션, 파일 경로 검증, daily
 
 ## 다음 세션에서 시작할 작업
 
-**추천 시작점:** 블로커 항목 — `checks/base/` 재구성 + `workers/inspect.py` 리팩토링 (C-4와 묶음)
-
-### CRITICAL 처리 현황
-
-| # | 항목 | 상태 |
-|---|------|------|
-| C-1 | SecretStr | ✅ 완료 (PR #14) — inspect.py는 ssh_client.py 리팩토링 시 통합 |
-| C-2 | WebSocket 인증 | ⏸ 후순위 (W-5 API 인증과 묶음) |
-| C-3 | sw_requirements | ✅ 완료 (PR #14) |
-| C-4 | checks/base 재구성 | ⏸ inspect.py 리팩토링 시 통합 |
-| C-5 | sw_install 큐 | ⏸ sw_install.py 구현 시 통합 |
-| C-6 | test_jobs.py | ⏸ inspect.py 리팩토링 시 통합 |
-| C-7 | deploy.sh 마이그레이션 | ✅ 완료 (PR #14) |
+**추천 시작점:** `checks/base/` 재구성 + `workers/inspect.py` 리팩토링 (C-4와 묶음)
 
 ### TODO 주석 위치 (grep: `# TODO(C-`)
 
-| 항목 | 파일 |
-|------|------|
-| C-1 | `workers/inspect.py:78`, `workers/inspect.py:225` |
-| C-2 | `api/websocket.py:35` |
-| C-4 | `checks/profiles/gpu_server.json` |
-| C-5 | `workers/app.py:4`, `config/celeryconfig.py:9` |
-| C-6 | `tests/test_api/__init__.py:1` |
+| 항목 | 파일 | 통합 시점 |
+|------|------|----------|
+| C-1 | `workers/inspect.py:78`, `:225` | `ssh_client.py` 리팩토링 시 |
+| C-2 | `api/websocket.py:35` | W-5 API 인증 구현 시 |
+| C-4 | `checks/profiles/gpu_server.json` | `inspect.py` 리팩토링 시 |
+| C-5 | `workers/app.py:4`, `config/celeryconfig.py:9` | `sw_install.py` 구현 시 |
+| C-6 | `tests/test_api/__init__.py:1` | `inspect.py` 리팩토링 시 |
 
 ---
 
 ## v2에서 바꿔야 하는 것 (전체 목록, 우선순위 순)
 
+**[완료]**
+- ✅ `api/schemas.py` — `sw_requirements` + `SecretStr` (C-1, C-3)
+- ✅ `api/models.py` — `Job.sw_requirements` + `JobStatus` 확장 (C-3, W-1)
+- ✅ `api/routers/jobs.py` — SecretStr `.get_secret_value()`, `sw_requirements` 저장
+- ✅ `scripts/deploy.sh` — stop→build→migrate→restart 순서 (C-7)
+- ✅ Alembic 마이그레이션 `a1b2c3d4` — `sw_requirements` + `JobStatus` 확장 (C-3)
+- ✅ `.claude/rules/` 4개 문서 (error-handling, sw-install, migration, sys-config)
+
 **[블로커] 아직 시작 안 된 항목:**
 
-1. **`checks/base/` 재구성** — C-4 해결
-2. **`workers/rule_validator.py` 신규** — `validation.rules` 기반 threshold 판정, 토큰 0
-3. **`workers/agent_gateway.py` 신규** — 에이전트 호출 판단 + compact input 구성
-4. **`workers/validate.py` 교체** — rule validator 우선, 에이전트 fallback
-5. **`workers/ssh_client.py` 교체** — SecretStr 지원, pw 접속 후 즉시 폐기
-6. **`workers/sw_planner.py` + `workers/sw_install.py` 신규** — SW 설치 파이프라인
-7. **`workers/inspect.py` 교체** — preflight/post-install 단계 분리 + cleanup task
-8. **`workers/app.py` 수정** — `q_sw_install` 큐 추가 — C-5 해결
-9. **`api/schemas.py` 수정** — `sw_requirements` 필드 추가 + SecretStr — C-1, C-3 해결
-10. **`api/models.py` 수정** — `Job.sw_requirements` Text 컬럼 + JobStatus 상태 확장
-11. **`config/logging.py` 신규** — structlog 민감필드 마스킹
-12. **`config/sw_compat_matrix.json` 신규** — driver/cuda/torch 버전 호환 lookup table
-13. **Alembic 마이그레이션** — sw_requirements + JobStatus 상태 추가
-14. **WebGUI 프론트엔드** — 미착수, 낮은 우선순위
+1. **`checks/base/` 재구성** — C-4: phase→preflight/post_install/collect, sw_gpu/sw_storage 분리 (`lspci` 기반 hw 로직 신규 작성)
+2. **`workers/inspect.py` 교체** — preflight/post-install 단계 분리 + cleanup task (C-4, C-6과 묶음)
+3. **`workers/ssh_client.py` 교체** — SecretStr 지원, pw 접속 후 즉시 폐기 (C-1 잔여 처리)
+4. **`workers/rule_validator.py` 신규** — `validation.rules` 기반 threshold 판정, 토큰 0
+5. **`workers/agent_gateway.py` 신규** — 에이전트 호출 판단 + compact input 구성
+6. **`workers/validate.py` 교체** — rule validator 우선, 에이전트 fallback
+7. **`workers/sw_planner.py` + `workers/sw_install.py` 신규** — SW 설치 파이프라인 (C-5와 묶음)
+8. **`workers/app.py` 수정** — `q_sw_install` 큐 추가 (C-5)
+9. **`config/logging.py` 신규** — structlog 민감필드 마스킹
+10. **`config/sw_compat_matrix.json` 신규** — driver/cuda/torch 버전 호환 lookup table
+11. **WebGUI 프론트엔드** — 미착수, 낮은 우선순위
 
 ---
 
