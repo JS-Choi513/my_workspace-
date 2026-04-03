@@ -97,28 +97,29 @@ config/logging.py 미구현, 프롬프트 인젝션, 파일 경로 검증, daily
 
 ## 다음 세션에서 시작할 작업
 
-**추천 시작점:** CRITICAL 항목 처리 (C-1, C-2부터 — 독립적으로 처리 가능)
+**추천 시작점:** 블로커 항목 — `checks/base/` 재구성 + `workers/inspect.py` 리팩토링 (C-4와 묶음)
 
-### CRITICAL 처리 순서 (권장)
+### CRITICAL 처리 현황
 
-1. **C-1 + C-3 묶음** (`api/schemas.py`, `api/models.py`)
-   - `sudo_password: str` → `SecretStr`
-   - `sw_requirements: str | None` 필드 추가
-   - Alembic 마이그레이션 (v2: sw_requirements + JobStatus 확장)
+| # | 항목 | 상태 |
+|---|------|------|
+| C-1 | SecretStr | ✅ 완료 (PR #14) — inspect.py는 ssh_client.py 리팩토링 시 통합 |
+| C-2 | WebSocket 인증 | ⏸ 후순위 (W-5 API 인증과 묶음) |
+| C-3 | sw_requirements | ✅ 완료 (PR #14) |
+| C-4 | checks/base 재구성 | ⏸ inspect.py 리팩토링 시 통합 |
+| C-5 | sw_install 큐 | ⏸ sw_install.py 구현 시 통합 |
+| C-6 | test_jobs.py | ⏸ inspect.py 리팩토링 시 통합 |
+| C-7 | deploy.sh 마이그레이션 | ✅ 완료 (PR #14) |
 
-2. **C-4** (`checks/base/` 재구성)
-   - `phase2~7` → `preflight/` + `post_install/` + `collect/`
-   - `sw_gpu` → `sw_gpu_hw.py` + `sw_gpu_sw.py`
-   - `sw_storage` → `sw_storage_hw.py` + `sw_storage_sw.py`
+### TODO 주석 위치 (grep: `# TODO(C-`)
 
-3. **C-5** (`workers/app.py`, `config/celeryconfig.py`)
-   - sw_install include 추가, q_sw_install 라우팅 추가
-
-4. **C-6** (`tests/test_api/test_jobs.py` 신규 작성)
-
-5. **C-7** (`scripts/deploy.sh` 마이그레이션 단계 삽입)
-
-6. **C-2** (`api/websocket.py` 인증 추가)
+| 항목 | 파일 |
+|------|------|
+| C-1 | `workers/inspect.py:78`, `workers/inspect.py:225` |
+| C-2 | `api/websocket.py:35` |
+| C-4 | `checks/profiles/gpu_server.json` |
+| C-5 | `workers/app.py:4`, `config/celeryconfig.py:9` |
+| C-6 | `tests/test_api/__init__.py:1` |
 
 ---
 
