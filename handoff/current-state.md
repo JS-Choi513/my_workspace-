@@ -216,15 +216,17 @@ docker compose exec api alembic upgrade head
 ```
 projects/inspection-system/
   CLAUDE.md                  ← 이 프로젝트의 Claude 지시
-  .claude/rules/             ← error-handling, migration, sys-config, sw-install
+  .claude/rules/             ← agents, api, database, error-handling, inspection-scripts,
+                                migration, profiles, security, sw-install, sys-config,
+                                testing, workers (12개 전부 존재)
   api/                       ← FastAPI
-  workers/                   ← Celery tasks (v1: inspect, validate, report, notify)
+  workers/                   ← Celery tasks (v1: inspect, validate, report)
   checks/base/               ← 검수 스크립트 (v2 재구성 필요: phase→preflight/post_install/collect)
   checks/profiles/           ← gpu_server.json
   config/                    ← settings, celeryconfig, prompts
   templates/                 ← Jinja2 리포트 템플릿
-  alembic/                   ← DB 마이그레이션 (v1 스키마)
+  alembic/                   ← DB 마이그레이션
   tests/                     ← pytest (test_jobs.py 누락)
-  scripts/                   ← deploy.sh (마이그레이션 단계 누락)
+  scripts/                   ← deploy.sh
   context/ (workspace)       ← target-servers.md, infra-environment.md
 ```
