@@ -173,7 +173,7 @@ config/logging.py 미구현, 프롬프트 인젝션, 파일 경로 검증, daily
 | 기타 시스템 설정 | grub/crontab/hibernate 등은 스크립트 아닌 SW Planner Agent 처리 |
 | 재시도 간격 | error-handling.md 기준 20초 — inspect.py의 60초는 버그 (W-2) |
 | known_hosts | 현재 None → 명시적 경로 `/etc/inspection/known_hosts` 지정 필요 (W-3) |
-| 로그 볼륨 경로 | docker-compose: `/srv/inspection/logs`, 규칙 문서: `/app/logs` — 통일 필요 (W-6) |
+| 로그 볼륨 경로 | `/srv/inspection/logs` — error-handling.md 통일 완료 (W-6) |
 
 ---
 
