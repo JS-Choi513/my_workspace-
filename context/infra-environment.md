@@ -87,7 +87,7 @@
 | `ANTHROPIC_API_KEY` | Claude API 키 | `sk-ant-...` |
 | `NFS_BASE_PATH` | 결과·로그 루트 경로 | `/srv/inspection` |
 | `SSH_KEY_DIR` | SSH 키 디렉토리 | `/etc/inspection/ssh_keys` (현재 미사용) |
-| `CLAUDE_MODEL` | 사용 모델 | `claude-sonnet-4-20250514` |
+| `CLAUDE_MODEL` | 사용 모델 | `claude-sonnet-4-6` |
 | `CLAUDE_MAX_TOKENS` | 에이전트 최대 토큰 | `4096` |
 | `WS_ENABLED` | WebSocket 활성화 | `true` |
 
