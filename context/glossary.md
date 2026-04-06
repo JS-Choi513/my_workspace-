@@ -31,11 +31,13 @@
 
 ## 에이전트 3종
 
-| 에이전트 | 트리거 | 역할 |
-|---------|--------|------|
-| **Inspect Agent** | SSH 실패, 스크립트 에러, JSON 파싱 에러 | 에러 진단 + 수정 액션 반환 |
-| **Verify Agent** | agent_zone 해당 경계값, warn_count ≥ 3 | 경계값 종합 판단 |
-| **SW Planner Agent** | 비정형 SW 요구사항, 설치 실패 | 설치 계획 JSON 생성 |
+| 에이전트 | 트리거 | 역할 | 담당 단계 |
+|---------|--------|------|----------|
+| **Inspect Agent** | SSH 실패, 스크립트 에러, JSON 파싱 에러 | 에러 진단 + 수정 액션 반환 | preflight, post_install, cleanup (q_inspect) |
+| **Verify Agent** | agent_zone 해당 경계값, warn_count ≥ 3 | 경계값 종합 판단 | validating (q_validate) |
+| **SW Planner Agent** | 비정형 SW 요구사항, SW 설치 실패 | 설치 계획 JSON 생성 | sw_install (q_sw_install) |
+
+설치 실패 시 담당 에이전트: **큐 기준**으로 결정. SSH 실패는 어느 단계든 Inspect Agent. 상세 → `.claude/rules/agents.md`
 
 ## 임계값 (gpu_server 프로파일 기준)
 
