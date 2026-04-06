@@ -5,10 +5,12 @@
 | 용어 | 설명 |
 |------|------|
 | **Job** | 검수 작업 단위. UUID v4. 서버 1대 = Job 1개 |
-| **Phase** | 검수 단계: `preflight` → `sw_install` → `post_install` → `collect` |
+| **Phase** | 스크립트 실행 묶음 단위 (Profile JSON의 `phases` 키): `preflight` / `post_install` / `collect`. JobStatus와 다름 |
+| **JobStatus** | DB에 기록되는 Job 전체 수명 상태. Phase + 시스템 처리 상태 + 완료/에러 상태 포함. 전이: `pending → preflight → (sw_install) → rebooting → post_install → validating → cleanup → reporting → pass/failed/rejected` |
 | **Profile** | 어떤 스크립트를 어떤 순서로 실행할지 정의한 JSON (`checks/profiles/{name}.json`) |
-| **preflight** | 드라이버/SW 없이 실행 가능한 HW 인식·OS 상태 점검 단계 |
-| **post_install** | 드라이버·SW 의존 점검 + Stress 테스트 단계 |
+| **preflight** | Phase: 드라이버/SW 없이 실행 가능한 HW 인식·OS 상태 점검 |
+| **post_install** | Phase: 드라이버·SW 의존 점검 + Stress 테스트 |
+| **collect** | Phase: dmesg·journalctl·XID 등 로그 수집. JobStatus에는 없음 (post_install 내부에서 실행) |
 | **RMA** | 반품·재검수. SW 요구사항 없이 `preflight → post_install`만 수행 |
 | **agent_zone** | Rule validator가 경계값으로 판정하는 구간. Verify Agent 호출 트리거 |
 | **compact input** | 에이전트 호출 시 실패/애매 항목만 추려서 전달하는 축약 입력 |
