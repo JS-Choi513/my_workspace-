@@ -1,0 +1,2 @@
+- [User Profile](user_profile.md) — SRE/HPC 엔지니어, 기술스택(bash/python/vim/tmux), 답변 스타일 선호(두괄식·드라이·한국어)
+- [Workspace Structure Patterns](feedback_workspace.md) — 문서 구조, 에이전트 역할 겹침, 우선순위 충돌 등 반복되는 구조적 문제
