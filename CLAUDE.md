@@ -50,9 +50,27 @@
 - 모든 명령은 `rtk <cmd>` — 훅이 자동 변환하므로 별도 처리 불필요
 
 ### Git / PR
-- `main` 직접 push 금지
-- 브랜치 명명: `feature/`, `fix/`, `chore/`
-- 완료 기준: `pytest` + `ruff` 통과 → PR 생성 → 사용자 merge 결정
+
+| 구분 | 브랜치 정책 |
+|------|-----------|
+| **개인 solo repo** | `main` 직접 push 허용. 브랜치 불필요 |
+| **팀 공유 repo** | `main` 직접 push 금지. 브랜치 필수: `feature/`, `fix/`, `chore/` |
+
+현재 `inspection-system`은 solo repo → main push 허용.  
+완료 기준: `pytest` + `ruff` 통과 → commit. PR은 선택사항 (사용자 판단).
+
+### context 파일 갱신 정책
+
+`context/` 파일은 원칙적으로 불변이나 아래 조건에서 갱신:
+
+| 파일 | 갱신 조건 |
+|------|----------|
+| `about-me.md` | 역할·기술스택 변경 시 |
+| `glossary.md` | 신규 용어 추가 또는 기존 정의 변경 시 |
+| `infra-environment.md` | 서버 IP·포트·Docker 구성 변경 시 |
+| `target-servers.md` | 신규 제품군 추가 또는 단종 변경 시 |
+
+갱신 주체: 사용자 또는 사용자 지시를 받은 에이전트. 에이전트 독단 갱신 금지.
 
 ### 규칙 우선순위
 
