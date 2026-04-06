@@ -23,10 +23,10 @@
 | 폴더 | 역할 | 주요 파일 |
 |------|------|----------|
 | `context/` | 배경·환경·용어 (세션 간 불변) | about-me.md, glossary.md, infra-environment.md, target-servers.md |
-| `rules/` | 워크스페이스 공통 코딩·문서 규칙 | api.md, writing.md, inspection-report-brief.md |
+| `rules/` | 워크스페이스 공통 코딩·문서 규칙 | api.md, writing.md |
 | `projects/` | 프로젝트별 소스코드 | inspection-system/ |
 | `handoff/` | 세션 인수인계 메모 | current-state.md |
-| `templates/` | 출력 구조 고정용 양식 | — |
+| `templates/` | 출력 구조 고정용 양식 | inspection-report-brief.md |
 | `outputs/` | 최종 결과물 | — |
 
 ---
