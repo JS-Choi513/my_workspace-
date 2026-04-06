@@ -24,11 +24,3 @@
 - 새 패키지: `pyproject.toml` dependencies 반드시 반영
 - 검수 스크립트(원격 실행): Python stdlib만 사용
 
-## 금지 사항
-
-```bash
-rm -rf /      # 절대 금지
-sudo rm       # 금지
-DROP DATABASE # 금지
-docker system prune  # 금지
-```
