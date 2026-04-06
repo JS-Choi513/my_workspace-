@@ -1,0 +1,1 @@
+- [Harness Evaluation - Inspection System](harness_evaluation_inspection_system.md) — GPU 서버 검수 자동화 시스템의 AI 에이전트 하네스 문서 전체 평가 결과
