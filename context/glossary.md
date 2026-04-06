@@ -5,7 +5,8 @@
 | 용어 | 설명 |
 |------|------|
 | **Job** | 검수 작업 단위. UUID v4. 서버 1대 = Job 1개 |
-| **Phase** | 스크립트 실행 묶음 단위 (Profile JSON의 `phases` 키): `preflight` / `post_install` / `collect`. JobStatus와 다름 |
+| **Phase** | 스크립트 실행 묶음 단위 (Profile JSON의 `phases` 키): `preflight` / `post_install` / `collect`. JobStatus와 다름. `sw_install`은 Phase 아님 — 파이프라인 단계(JobStatus)임 |
+| **Phase 1** | H/W 수동 검수 8항목. GUI 직접 입력, 시스템 자동화 범위 밖 |
 | **JobStatus** | DB에 기록되는 Job 전체 수명 상태. Phase + 시스템 처리 상태 + 완료/에러 상태 포함. 전이: `pending → preflight → (sw_install) → rebooting → post_install → validating → cleanup → reporting → pass/failed/rejected` |
 | **Profile** | 어떤 스크립트를 어떤 순서로 실행할지 정의한 JSON (`checks/profiles/{name}.json`) |
 | **preflight** | Phase: 드라이버/SW 없이 실행 가능한 HW 인식·OS 상태 점검 |
