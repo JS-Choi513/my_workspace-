@@ -56,8 +56,8 @@
 | **개인 solo repo** | `main` 직접 push 허용. 브랜치 불필요 |
 | **팀 공유 repo** | `main` 직접 push 금지. 브랜치 필수: `feature/`, `fix/`, `chore/` |
 
-현재 `inspection-system`은 solo repo → main push 허용.  
-완료 기준: `pytest` + `ruff` 통과 → commit. PR은 선택사항 (사용자 판단).
+현재 `inspection-system`은 팀 공유 repo → main 직접 push 금지. 브랜치 필수.  
+완료 기준: `pytest` + `ruff` 통과 → commit → PR 생성. merge는 사용자 결정.
 
 ### context 파일 갱신 정책
 
