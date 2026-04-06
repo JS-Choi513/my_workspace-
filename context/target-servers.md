@@ -111,24 +111,7 @@ NVIDIA 계열이 주력. 대부분의 NVIDIA GPU 탑재 가능.
 
 ---
 
-## 검수 환경
-
-### SSH 접근
-
-- 배스천 없이 검수 시스템 → 대상 서버 직접 SSH
-- 기본 계정: `deepgadget` / `deepgadget` (SSH 접속 및 sudo 모두 이 계정)
-- 계정 정보는 job 제출 시 유저가 제공. 기본값과 다를 수 있음
-
-### OS 상태
-
-| 케이스 | OS 상태 | 대표 시나리오 |
-|--------|---------|--------------|
-| 신규 출고 | Ubuntu 클린 설치, 드라이버 없음 | dg5W/dg5R 신제품 |
-| RMA | 이전 SW 일부 잔존 가능 | 단종 제품 및 반품 재검수 |
-
-Ubuntu 22.04 / 24.04가 절대 다수. Rocky/RHEL은 SW Planner Agent 처리 (sw-install.md 참조).
-
-### 프로파일
+## 프로파일
 
 전 제품군 공통: `checks/profiles/gpu_server.json`
 
