@@ -7,7 +7,31 @@
 
 ## 추천 시작점
 
-`checks/base/` 재구성 + `workers/inspect.py` 리팩토링 (C-4, C-6 묶음)
+**작업 블록**: `checks/base/` 재구성 + `workers/inspect.py` 리팩토링 (C-4, C-6 묶음)
+
+**전제조건 확인**:
+```bash
+ls projects/inspection-system/checks/base/          # 현재 파일 목록
+grep -r "# TODO(C-4" projects/inspection-system/     # TODO 위치 확인
+git status                                           # 미커밋 변경사항 없음 확인
+```
+
+**실행 순서**:
+1. `checks/base/` 하위에 `preflight/`, `post_install/`, `collect/` 디렉토리 생성
+2. 기존 스크립트를 `inspection-scripts.md` Phase별 목록에 따라 이동
+   - `sw_gpu.py` → `sw_gpu_hw.py`(preflight/) + `sw_gpu_sw.py`(post_install/) 분리
+   - `sw_storage.py` → `sw_storage_hw.py`(preflight/) + `sw_storage_sw.py`(post_install/) 분리
+   - 나머지 preflight 스크립트 → `preflight/`로 이동
+   - stress/nccl 스크립트 → `post_install/`로 이동
+   - `collect_all_logs.py` → `collect/`로 이동
+3. `checks/profiles/gpu_server.json` `phases` 구조를 새 디렉토리 구조에 맞게 재작성
+4. `workers/inspect.py`에서 preflight/post_install 단계 분리 + cleanup task 추가 (C-6: `tests/test_api/__init__.py:1` TODO 제거 포함)
+
+**완료조건**:
+- `pytest tests/ -x -q` 통과
+- `python3 checks/base/preflight/sw_gpu_hw.py | python3 -m json.tool` 정상 출력
+- `grep -r "# TODO(C-4\|# TODO(C-6" projects/inspection-system/` 결과 없음
+- `ruff check . && ruff format --check .` 통과
 
 ---
 
