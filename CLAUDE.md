@@ -37,7 +37,7 @@
 |------|------|
 | `context/about-me.md` | 사용자 역할·배경 |
 | `context/glossary.md` | 시스템 용어 정의 |
-| `context/infra-environment.md` | 검수 시스템 호스트·NFS·네트워크 구성 |
+| `context/infra-environment.md` | 검수 시스템 호스트·NFS·네트워크·대상 서버 SSH 접근 |
 | `context/target-servers.md` | 검수 대상 서버 제품군·스펙·가속기 (환경·SSH → infra-environment.md) |
 | `rules/api.md` | API·코드 작성 규칙 (프로젝트별 `.claude/rules/` 우선) |
 | `rules/writing.md` | 커밋·문서 작성 규칙 |
