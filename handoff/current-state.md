@@ -1,26 +1,23 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-07 (9차 세션)
+> 최종 업데이트: 2026-04-07 (10차 세션)
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
 
 ## 추천 시작점
 
-**다음 블로커**: Blocker 7b — `workers/sw_install.py` 신규 + Blocker 8 `workers/app.py` q_sw_install 큐 추가
+**다음 블로커**: Blocker 9 — `config/logging.py` structlog 민감필드 마스킹
 
 **전제조건 확인**:
 ```bash
-git log --oneline -5
-gh pr list --state all --limit 5   # PR #28, #29 머지 여부 확인
+gh pr list --state all --limit 5   # PR #30 머지 여부 확인
 git checkout main && git pull
 ```
 
 **작업 순서 권장**:
-1. PR #28, #29 머지 확인 후 진행
-2. Blocker 7b: `workers/sw_install.py` 신규 (q_sw_install 태스크)
-3. Blocker 8: `workers/app.py` — q_sw_install 큐 추가 (sw_install.py와 같은 PR)
-4. Blocker 9: `config/logging.py` — structlog 민감필드 마스킹
+1. PR #30 머지 확인 후 진행
+2. Blocker 9: `config/logging.py` 신규 — structlog 민감필드 마스킹
 
 ---
 
@@ -28,8 +25,7 @@ git checkout main && git pull
 
 | PR | 브랜치 | 내용 | 상태 |
 |----|--------|------|------|
-| #28 | `feature/sw-planner` | workers/sw_planner.py + sw_compat_matrix.json (Blocker 7a + 10) | 리뷰 반영 완료 |
-| #29 | `fix/pr28-review-p0-p1` | PR#27 리뷰 P0·P1 — verdict 키 오류 + websocket terminal 누락 | OPEN |
+| #30 | `feature/sw-install` | workers/sw_install.py 신규 + q_sw_install 큐 (Blocker 7b + 8) | OPEN |
 
 ---
 
@@ -38,41 +34,36 @@ git checkout main && git pull
 | 항목 | 파일:라인 | 통합 시점 |
 |------|----------|----------|
 | W-3 | `workers/inspect.py:127` | known_hosts 명시 경로 |
+| W-3 | `workers/sw_install.py:109` | known_hosts 명시 경로 |
 | C-2 | `api/websocket.py:35` | W-5 API 인증 구현 시 |
-| C-5 | `workers/app.py:5` | `sw_install.py` 구현 시 (Blocker 8) |
-| C-5 | `config/celeryconfig.py:8` | `sw_install.py` 구현 시 (Blocker 8) |
 
 ---
 
 ## 미처리 블로커 (우선순위 순)
 
-1. `workers/sw_install.py` 신규 + `workers/app.py` q_sw_install 큐 (Blocker 7b + 8) ← **다음 작업**
-2. `config/logging.py` 신규 — structlog 민감필드 마스킹 (Blocker 9)
-
-> Blocker 10 (`config/sw_compat_matrix.json`)은 9차 세션 PR #28에 포함되어 완료.
+1. `config/logging.py` 신규 — structlog 민감필드 마스킹 (Blocker 9) ← **다음 작업**
 
 ---
 
-## 9차 세션 완료 항목
+## 10차 세션 완료 항목
 
-### PR #28 — Blocker 7a + Blocker 10 (리뷰 반영 포함)
+### PR #30 — Blocker 7b + Blocker 8
 
-- **workers/sw_planner.py** 신규
-  - `parse(md_text)`: 불릿 라인 + plain line → 4가지 분류 (sw_install / account / storage_mount / sys_config)
-  - `build_plan(job_id, sw_requirements)`: 파싱 + 호환성 확인 + agent 에스컬레이션
-  - `_check_compat()`: driver+cuda, cuda+torch 매트릭스 조회 → 불호환 시 agent_required=True
-- **workers/agent_gateway.py**: `call_sw_planner_agent` stub → 실구현
-- **config/sw_compat_matrix.json**: driver/cuda/torch 호환 lookup table
-- **config/prompts/sw_planner_agent.txt**: SW Planner Agent 프롬프트
-- **리뷰 피드백 반영 (PR#28 리뷰)**:
-  - P1 #1: `_parse_bullet_lines` — plain line 허용 (`nvidia-driver-560`, `torch==2.4.0`)
-  - P1 #2: `_extract_version` 신규 — pip 스타일(`==`), 공백 숫자, 하이픈 후미(`-12-6`→`12.6`)
-  - P2: `_is_alias_boundary` 신규 — `docker-compose` → `docker` 오매핑 방지
-
-### PR #29 — PR#27 리뷰 P0·P1 버그픽스
-
-- **P0** (`workers/report.py`): `verdict.get("overall")` → `verdict.get("verdict")` 키 수정 + final_status 매핑 (`pass`/`failed`/`rejected`)
-- **P1** (`api/websocket.py`): `_TERMINAL`에 `"failed"`, `"rejected"`, `"report_failed"` 추가
+- **workers/sw_install.py** 신규 (q_sw_install Celery 태스크)
+  - 표준 sys_config 항상 적용 (Ubuntu 직접 / 비Ubuntu → SW Planner Agent):
+    GRUB 파라미터(CPU 종류별), CPU 거버너 performance, GPU PM(NVIDIA), 자동 업데이트 방지
+  - 13종 패키지 설치 함수 (sw-install.md 절차 준수):
+    nvidia_driver/cuda/cudnn/torch/docker/docker_container_toolkit/
+    miniconda/python/gcc/rustup/tt_kmd/tt_smi/tt_burnin
+  - nvidia-driver 설치 후 reboot → 300s SSH 재접속 폴링 → driver 검증
+  - account 생성 / storage_mount / 비정형 sys_config (→ Agent 위임)
+  - 설치 실패 → SW Planner Agent 복구 시도, 복구 불가 → job FAILED + cleanup
+  - 의존성 순서 정렬 `_sort_items` + pre/post reboot 분리 `_split_items_by_reboot`
+- **workers/inspect.py**: C-5 stub 제거 → sw_requirements 유무로 분기
+  (`run_sw_install(q_sw_install)` / `run_post_install(q_inspect)`)
+- **workers/app.py**: `workers.sw_install` include 추가
+- **config/celeryconfig.py**: `workers.sw_install.*` 라우팅 활성화
+- **tests/test_workers/test_sw_install.py**: 25개 테스트
 
 ---
 
