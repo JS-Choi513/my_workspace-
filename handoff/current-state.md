@@ -1,31 +1,43 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-07 (10차 세션)
+> 최종 업데이트: 2026-04-07 (11차 세션)
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
 
 ## 추천 시작점
 
-**다음 블로커**: Blocker 9 — `config/logging.py` structlog 민감필드 마스킹
+**다음 작업**: WebGUI 프론트엔드
 
 **전제조건 확인**:
 ```bash
-gh pr list --state all --limit 5   # PR #30 머지 여부 확인
 git checkout main && git pull
+pytest tests/ -x -q   # 256 passed, 8 skipped (main 기준)
 ```
-
-**작업 순서 권장**:
-1. PR #30 머지 확인 후 진행
-2. Blocker 9: `config/logging.py` 신규 — structlog 민감필드 마스킹
 
 ---
 
-## 열린 PR 목록 (세션 종료 시점)
+## 열린 PR 목록
 
-| PR | 브랜치 | 내용 | 상태 |
-|----|--------|------|------|
-| #30 | `feature/sw-install` | workers/sw_install.py 신규 + q_sw_install 큐 (Blocker 7b + 8) | OPEN |
+없음 (전체 머지 완료)
+
+---
+
+## v2 구현 완료 현황
+
+| 항목 | PR | 상태 |
+|------|----|------|
+| api/schemas.py, api/models.py, Alembic 마이그레이션 | — | ✅ |
+| checks/base/ 재구성 (preflight/ post_install/ collect/) | — | ✅ |
+| workers/inspect.py (preflight/post_install/collect/cleanup 4 태스크) | — | ✅ |
+| workers/ssh_client.py (SecretStr + pw 폐기) | — | ✅ |
+| workers/rule_validator.py | #25 | ✅ |
+| workers/agent_gateway.py | #26 | ✅ |
+| workers/validate.py (v2) | #27 | ✅ |
+| workers/sw_planner.py | #28 | ✅ |
+| workers/sw_install.py + q_sw_install 큐 | #30 | ✅ |
+| config/logging.py (structlog 민감필드 마스킹) | #31 | ✅ |
+| **WebGUI 프론트엔드** | — | ☐ **다음 작업** |
 
 ---
 
@@ -36,34 +48,6 @@ git checkout main && git pull
 | W-3 | `workers/inspect.py:127` | known_hosts 명시 경로 |
 | W-3 | `workers/sw_install.py:109` | known_hosts 명시 경로 |
 | C-2 | `api/websocket.py:35` | W-5 API 인증 구현 시 |
-
----
-
-## 미처리 블로커 (우선순위 순)
-
-1. `config/logging.py` 신규 — structlog 민감필드 마스킹 (Blocker 9) ← **다음 작업**
-
----
-
-## 10차 세션 완료 항목
-
-### PR #30 — Blocker 7b + Blocker 8
-
-- **workers/sw_install.py** 신규 (q_sw_install Celery 태스크)
-  - 표준 sys_config 항상 적용 (Ubuntu 직접 / 비Ubuntu → SW Planner Agent):
-    GRUB 파라미터(CPU 종류별), CPU 거버너 performance, GPU PM(NVIDIA), 자동 업데이트 방지
-  - 13종 패키지 설치 함수 (sw-install.md 절차 준수):
-    nvidia_driver/cuda/cudnn/torch/docker/docker_container_toolkit/
-    miniconda/python/gcc/rustup/tt_kmd/tt_smi/tt_burnin
-  - nvidia-driver 설치 후 reboot → 300s SSH 재접속 폴링 → driver 검증
-  - account 생성 / storage_mount / 비정형 sys_config (→ Agent 위임)
-  - 설치 실패 → SW Planner Agent 복구 시도, 복구 불가 → job FAILED + cleanup
-  - 의존성 순서 정렬 `_sort_items` + pre/post reboot 분리 `_split_items_by_reboot`
-- **workers/inspect.py**: C-5 stub 제거 → sw_requirements 유무로 분기
-  (`run_sw_install(q_sw_install)` / `run_post_install(q_inspect)`)
-- **workers/app.py**: `workers.sw_install` include 추가
-- **config/celeryconfig.py**: `workers.sw_install.*` 라우팅 활성화
-- **tests/test_workers/test_sw_install.py**: 25개 테스트
 
 ---
 
