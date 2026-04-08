@@ -1,6 +1,6 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-08 (11차 세션)
+> 최종 업데이트: 2026-04-08 (12차 세션)
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
@@ -19,7 +19,9 @@ pytest tests/ -x -q   # 263 passed, 8 skipped (main 기준)
 
 ## 열린 PR 목록
 
-없음 (전체 머지 완료)
+| PR | 브랜치 | 내용 |
+|----|--------|------|
+| #33 | fix/cross-validation-harness | harness 교차검증 5건 수정 — 머지 대기 |
 
 ---
 
@@ -38,27 +40,33 @@ pytest tests/ -x -q   # 263 passed, 8 skipped (main 기준)
 | workers/sw_install.py + q_sw_install 큐 | #30 | ✅ |
 | config/logging.py (structlog 민감필드 마스킹) | #31 | ✅ |
 | sw_install 보안·정확성 버그 4건 수정 | #32 | ✅ |
+| harness 교차검증 5건 수정 | #33 | ☐ 머지 대기 |
 | **WebGUI 프론트엔드** | — | ☐ 보류 |
 
 ---
 
-## 11차 세션 완료 항목
+## 12차 세션 완료 항목
 
-### PR #31 — Blocker 9 (config/logging.py)
+### PR #33 — harness 교차검증 5건 수정
 
-- `config/logging.py` 신규: `mask_sensitive_fields` structlog 프로세서
-  - 키 완전 마스킹: `password`, `sudo_password`, `api_key`, `anthropic_api_key`, `token`, `secret` (대소문자 무관)
-  - 문자열 내 `KEY=value` 패턴 치환 (traceback 환경변수 대응)
-  - 중첩 dict / 리스트 재귀 처리
-- `api/main.py`, `workers/app.py` 시작 시 `configure_logging()` 호출
-- `tests/test_config/test_logging.py` 29개 테스트
+병렬 서브에이전트 4개로 harness rules 13개 vs 구현 코드 교차검증 수행.
+15건 발견 → 직접 코드 확인 → 10건 false positive 기각, 5건 반영.
 
-### PR #32 — PR#31 리뷰 4건 수정
+**반영 항목**:
 
-1. **`_handle_account` 쉘 인젝션**: `shlex.quote(username)` + 패스워드 → `sudo -S chpasswd` stdin 전달
-2. **`_install_python` 3파트 버전**: `"3.11.5"` → `python3.11.5` 버그 → `[:2]` join으로 `python3.11` 생성
-3. **retry 전 `_mark_failed` 제거**: `self.request.retries >= self.max_retries` 일 때만 호출 (`sw_install.py` + `inspect.py` 3곳)
-4. **`DisconnectError` 억제 가드**: `"nvidia_driver" not in failed_deps` 조건 추가 — reboot trigger와 동일하게 맞춤
+1. **`workers/validate.py`**: `RateLimitError` / `APIConnectionError` 재시도 중 `_mark_failed` 조기 호출 제거 → `retries >= max_retries`일 때만 호출
+2. **`workers/sw_install.py`**: GRUB 파라미터 변경 후 nvidia_driver 재부팅 없는 경우 `grub_only_reboot_triggered` 플래그로 별도 재부팅 처리
+3. **`api/schemas.py` + `api/models.py`**: `hw_manual_checks: dict | None` 필드 누락 추가
+4. **`alembic/versions/c3d4e5f6`**: `jobs.hw_manual_checks` JSON 컬럼 마이그레이션
+5. **`config/settings.py` + `.env.example`**: 미사용 `claude_max_tokens` 제거
+6. **`checks/profiles/gpu_server.json`**: baseline에 `smartctl` 추가
+
+**기각 항목 (false positive)**:
+- C-1: phase_env SUDO_PASSWORD — inspection-scripts.md 설계대로 (env var 전달 의도된 패턴)
+- C-2: inspect.py APIConnectionError — inspect.py는 Anthropic API 직접 호출 없음
+- C-3: 스크립트 실패 FAILED 미처리 — caller에서 정상 호출됨
+- C-4: 비Ubuntu sys-config skip — 코드에 agent 경유 구현 확인
+- M-3: sys_config CheckResult 미저장 — install_results 루프에서 전부 저장 확인
 
 ---
 
@@ -67,7 +75,7 @@ pytest tests/ -x -q   # 263 passed, 8 skipped (main 기준)
 | 항목 | 파일:라인 | 통합 시점 |
 |------|----------|----------|
 | W-3 | `workers/inspect.py:127` | known_hosts 명시 경로 |
-| W-3 | `workers/sw_install.py:109` | known_hosts 명시 경로 |
+| W-3 | `workers/sw_install.py:149` | known_hosts 명시 경로 |
 | C-2 | `api/websocket.py:35` | W-5 API 인증 구현 시 |
 
 ---
