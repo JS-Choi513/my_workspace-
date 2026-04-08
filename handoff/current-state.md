@@ -48,6 +48,43 @@ pytest tests/ -x -q   # 270 passed, 8 skipped
 
 ---
 
+## 15차 세션 완료 항목
+
+### PR #35 — stress 도구 빌드 경로 + baseline 엄격화
+
+**실서버(10.100.1.23) 검수 결과 gpu_burn 실제 미실행 발견 → 수정**:
+
+1. **stress_gpu.py 재작성** — gpu_burn 전용
+   - 빌드 경로 `/opt/gpu-burn` → `~/gpu-burn` (sudo 불필요)
+   - dcgmi/pytorch fallback 제거 (silent skip 방지)
+   - `ensure_gpu_burn()`: 바이너리 → nvcc/git/make 점검 → clone → make, 단계별 실패 사유(stderr 마지막 5줄) 명시
+   - 실행 옵션: `gpu_burn -d -tc <duration>` (FP64 + Tensor Core)
+   - `Popen(..., stderr=PIPE, text=True)` — 리뷰 반영, str/bytes 혼용 TypeError 방지
+
+2. **nccl_bandwidth.py 재작성** — nccl-tests 전용
+   - 빌드 경로 `/opt/nccl-tests` → `~/nccl-tests`
+   - pytorch fallback 제거
+   - 측정 실패 시 `warn` → `fail` 승격 + 사유
+
+3. **baseline 설치 엄격화** (`workers/inspect.py`)
+   - `_verify_packages()`, `_install_and_verify_baseline()` 추가
+   - `dpkg -s` 로 패키지별 설치 여부 개별 검증
+   - baseline 5개 중 1개라도 누락 → 즉시 `job=failed` + `_dispatch_cleanup`
+   - `check_results` 에 `baseline_install` 항목으로 `installed/missing/apt_tail` 기록
+   - `sudo_password` 미제공 케이스도 동일 처리 (warning → error 승격)
+   - 이전: silent warning → 후속 단계가 nvme-cli 부재만 잡음, 근본 원인 손실
+   - 변경: 어떤 패키지가 왜 실패했는지 DB·로그 모두 추적
+
+4. **sw_storage_sw.py** — nvme 장치 + nvme-cli 미설치 시 안전망 `fail` (baseline 가드 우회 케이스 대비)
+
+5. **cleanup 경로** — `gpu_server.json remove_dirs`: `$HOME/gpu-burn`, `$HOME/nccl-tests`. `inspect.py` cleanup이 `$HOME/`·`~/` prefix는 sudo 없이 `rm -rf`
+
+**리뷰 반영**: stress_gpu Popen `text=True` 누락 (claude bot 지적, fda7d63)
+
+**테스트**: 273 passed, 8 skipped
+
+---
+
 ## 14차 세션 완료 항목
 
 ### PR #34 — 실서버 버그 수정 + GPU stress 자동 설치
