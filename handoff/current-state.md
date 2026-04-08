@@ -7,16 +7,13 @@
 
 ## 추천 시작점
 
-**다음 작업**: GPU stress 자동 설치 구현 (설계 확정, 미구현)
+**다음 작업**: WebGUI 프론트엔드 (보류 중 — 기술 방향 미확정)
 
 **전제조건 확인**:
 ```bash
 git checkout main && git pull
-pytest tests/ -x -q   # 263 passed, 8 skipped 기준
+pytest tests/ -x -q   # 270 passed, 8 skipped
 ```
-
-**주의**: 14차 세션 변경사항(SSH 수정 + preflight 재구성)이 아직 미커밋 상태.
-구현 시작 전 이 변경사항 먼저 커밋/PR 처리 필요.
 
 ---
 
@@ -25,6 +22,7 @@ pytest tests/ -x -q   # 263 passed, 8 skipped 기준
 | PR | 브랜치 | 내용 |
 |----|--------|------|
 | #33 | fix/cross-validation-harness | harness 교차검증 + 리뷰 반영 완료 — merge 대기 |
+| #34 | feat/gpu-stress-auto-install | GPU stress 자동 설치 — merge 대기 |
 
 ---
 
@@ -44,71 +42,41 @@ pytest tests/ -x -q   # 263 passed, 8 skipped 기준
 | config/logging.py (structlog 민감필드 마스킹) | #31 | ✅ |
 | sw_install 보안·정확성 버그 4건 수정 | #32 | ✅ |
 | harness 교차검증 5건 수정 | #33 | ☐ 머지 대기 |
-| **SSH auth 수정 + preflight sys-config 재구성** | — | ☐ 미커밋 |
-| **GPU stress 자동 설치** | — | ☐ 미구현 |
+| SSH auth 수정 + preflight sys-config 재구성 + sleep.target | #34 | ☐ 머지 대기 |
+| GPU stress 자동 설치 (driver/CUDA 임시 설치 + cleanup) | #34 | ☐ 머지 대기 |
 | **WebGUI 프론트엔드** | — | ☐ 보류 |
 
 ---
 
 ## 14차 세션 완료 항목
 
-### 실서버 테스트 (10.100.1.23) 중 발견 + 수정
+### PR #34 — 실서버 버그 수정 + GPU stress 자동 설치
 
-**버그 1 — SSH 인증 실패 (미커밋)**
-- 원인: `_build_connect_kwargs`에서 `_ssh_key_path()`가 미사용 키 파일(`/etc/inspection/ssh_keys/default`)을 발견해 항상 key auth 시도 → password auth 도달 불가
-- 수정: password 우선, key는 fallback으로 순서 변경
-- 파일: `workers/inspect.py`, `workers/sw_install.py` (두 파일 동일 패턴 수정)
+**실서버 테스트(10.100.1.23) 중 발견 수정 3건**:
 
-**버그 2 — sleep.target FAIL (미커밋)**
-- 원인: `_disable_auto_update`에 `sleep.target mask`가 없었음
-- 수정: `systemctl mask sleep.target 2>&1 || true` 추가
-- 파일: `workers/sw_install.py:_disable_auto_update`
+1. **SSH auth 실패**: `_build_connect_kwargs` — 미사용 key 파일이 발견돼 password auth 미도달
+   → password 우선, key fallback 순서로 변경 (`inspect.py`, `sw_install.py`)
 
-**기능 개선 — Preflight sys-config 항상 적용 (미커밋)**
-- 배경: sw_requirements 없으면 SW Install 스킵 → GRUB 파라미터 미적용됐음
-- 수정: `_async_preflight`를 이중 세션 구조로 재구성
-  - 세션 1: baseline + sys-config(GRUB 포함) → GRUB 변경 시 재부팅 후 세션 2
-  - 세션 2: 재부팅 후 스크립트 실행
-- 파일: `workers/inspect.py:_async_preflight`
+2. **sleep.target FAIL**: `_disable_auto_update`에 `systemctl mask sleep.target` 누락
+   → 추가 (`sw_install.py`)
 
-**실서버 검증 결과**: `pass` (sw_auto_update, sw_power_mgmt 모두 정상 확인)
+3. **preflight sys-config 미적용**: sw_requirements 없으면 SW Install 스킵 → GRUB 미적용
+   → `_async_preflight` 이중 세션 재구성 (항상 sys-config 적용) (`inspect.py`)
 
----
+**GPU stress 자동 설치 구현**:
+- `gpu_server.json`: `stress_config: {driver_version: "580", cuda_version: "13"}` 추가
+- `sw_install.py`: `_check_driver_installed`, `_check_cuda_installed`, `_save/_load_temp_packages` 5개 헬퍼
+- `inspect.py:_async_preflight`: GRUB + driver 임시 설치 → **단일 재부팅** 통합
+- `inspect.py:_async_post_install`: CUDA 미설치 시 임시 설치 (stress_gpu.py gpu_burn 전제)
+- `inspect.py:_async_cleanup`: `temp_packages.json` 읽어 `apt purge` 제거
 
-### GPU stress 자동 설치 — 설계 확정 (미구현)
+**부수 버그 수정** (test_validate.py):
+- 세션 13 추가 테스트 2건 — `validate_results.run(mock_self, ...)` 잘못된 패턴
+  (bound method라 `mock_self`가 `job_id`로 들어감)
+  → `validate_results.run.__func__(mock_self, ...)` 로 수정
+- `httpx.Response(429)` → `httpx.Response(429, request=request)` (request 누락 수정)
 
-**시나리오**: sw_requirements 없이 잡 제출 → GPU burn + CPU stress 자동 실행
-
-**설계 결정**:
-| 항목 | 결정 |
-|------|------|
-| driver 버전 | `580` (gpu_server.json `stress_config.driver_version`) |
-| CUDA 버전 | `13` (gpu_server.json `stress_config.cuda_version`) |
-| 재부팅 정책 | GRUB 변경 + driver 설치를 **단일 재부팅**으로 통합 |
-| GPU 없는 서버 | 전체 스킵 |
-| 완료 후 처리 | Cleanup에서 `apt purge` (driver + CUDA 모두 제거) |
-
-**구현 계획**:
-
-1. `checks/profiles/gpu_server.json`
-   - `stress_config: { driver_version: "580", cuda_version: "13" }` 추가
-
-2. `workers/sw_install.py`
-   - `_nfs_temp_packages_path(job_id)` — NFS 경로 헬퍼
-   - `_save_temp_packages(job_id, packages)` — 임시 설치 목록 저장
-   - `_load_temp_packages(job_id)` — 임시 설치 목록 로드
-   - `_check_driver_installed(conn)` — nvidia-smi 응답으로 driver 확인
-   - `_check_cuda_installed(conn)` — nvcc 실행 가능 여부 확인
-
-3. `workers/inspect.py:_async_preflight` — 단일 재부팅으로 재구성
-   - 세션 1: sys-config → GRUB 변경 여부 기록(reboot 아직 X) → GPU 있고 driver 없으면 임시 설치 → `reboot_needed`면 단일 재부팅
-   - 세션 2: 재부팅 후 reconnect → preflight 스크립트 실행
-
-4. `workers/inspect.py:_async_post_install` — CUDA 임시 설치 추가
-   - stress_tools 설치 후: GPU 있고 CUDA 없으면 임시 CUDA 설치 → temp_packages 갱신
-
-5. `workers/inspect.py:_async_cleanup` — 임시 패키지 제거
-   - `_load_temp_packages(job_id)` → 있으면 `apt purge`
+**테스트**: 270 passed, 8 skipped
 
 ---
 
@@ -125,17 +93,6 @@ pytest tests/ -x -q   # 263 passed, 8 skipped 기준
 ## 미처리 WARNING
 
 W-3 `known_hosts=None`→명시 경로 / W-4 Redis 인증 / W-5 API 인증 / W-7 `raw_output` 누락 / W-8 SSH mock / W-10 `create_type=False`
-
----
-
-## 미커밋 변경사항 (커밋 전 처리 필요)
-
-| 파일 | 변경 내용 |
-|------|----------|
-| `workers/inspect.py` | `_build_connect_kwargs` password 우선 + preflight 이중 세션 재구성 |
-| `workers/sw_install.py` | `_build_connect_kwargs` password 우선 + sleep.target mask 추가 |
-
-커밋 방향: `fix/preflight-ssh-sysconfg` 브랜치로 PR 생성 권장
 
 ---
 
