@@ -40,9 +40,10 @@ pytest tests/ -x -q   # 270 passed, 8 skipped
 | workers/sw_install.py + q_sw_install 큐 | #30 | ✅ |
 | config/logging.py (structlog 민감필드 마스킹) | #31 | ✅ |
 | sw_install 보안·정확성 버그 4건 수정 | #32 | ✅ |
-| harness 교차검증 5건 수정 | #33 | ☐ 머지 대기 |
-| SSH auth 수정 + preflight sys-config 재구성 + sleep.target | #34 | ☐ 머지 대기 |
-| GPU stress 자동 설치 (driver/CUDA 임시 설치 + cleanup) | #34 | ☐ 머지 대기 |
+| harness 교차검증 5건 수정 | #33 | ✅ |
+| SSH auth 수정 + preflight sys-config 재구성 + sleep.target | #34 | ✅ |
+| GPU stress 자동 설치 (driver/CUDA 임시 설치 + cleanup) | #34 | ✅ |
+| gpu_burn/nccl-tests $HOME 빌드 + baseline 엄격 실패 | #35 | ✅ |
 | **WebGUI 프론트엔드** | — | ☐ 보류 |
 
 ---
