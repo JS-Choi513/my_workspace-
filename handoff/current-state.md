@@ -1,6 +1,6 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-08 (12차 세션)
+> 최종 업데이트: 2026-04-08 (13차 세션)
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
@@ -12,7 +12,7 @@
 **전제조건 확인**:
 ```bash
 git checkout main && git pull
-pytest tests/ -x -q   # 263 passed, 8 skipped (main 기준)
+pytest tests/ -x -q   # 263 passed, 8 skipped (main 기준) + 이번 세션 테스트 5개 추가 예정
 ```
 
 ---
@@ -21,7 +21,7 @@ pytest tests/ -x -q   # 263 passed, 8 skipped (main 기준)
 
 | PR | 브랜치 | 내용 |
 |----|--------|------|
-| #33 | fix/cross-validation-harness | harness 교차검증 5건 수정 — 머지 대기 |
+| #33 | fix/cross-validation-harness | harness 교차검증 + 리뷰 반영 완료 — merge 대기 |
 
 ---
 
