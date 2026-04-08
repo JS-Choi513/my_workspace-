@@ -19,10 +19,9 @@ pytest tests/ -x -q   # 270 passed, 8 skipped
 
 ## 열린 PR 목록
 
-| PR | 브랜치 | 내용 |
-|----|--------|------|
-| #33 | fix/cross-validation-harness | harness 교차검증 + 리뷰 반영 완료 — merge 대기 |
-| #34 | feat/gpu-stress-auto-install | GPU stress 자동 설치 — merge 대기 |
+(없음)
+
+최근 머지: #33, #34, #35
 
 ---
 
