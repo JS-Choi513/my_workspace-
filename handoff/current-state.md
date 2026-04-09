@@ -129,6 +129,45 @@ ruff check . && ruff format --check .
 
 ---
 
+## 16차 세션 완료 항목
+
+### PR #37 — 실서버 테스트 중 발견 4건 수정 + GPU 분류
+
+**실서버(10.100.1.23, RTX 4090 x4) 검수 중 발견**:
+
+1. **sw_gpu_hw lspci 오탐 (8→4)**: `lspci | grep NVIDIA` 가 GPU 1장당 HDMI Audio 엔트리까지 카운트. `lspci -mm -d 10de:` + class 필터(VGA/3D only)로 수정. `parts[3]`(subsystem vendor) → `parts[2]`(device) 인덱스 버그도 수정.
+
+2. **sw_storage_sw nvme-cli permission denied**: `check_nvme_smart` 가 sudo 없이 `nvme smart-log` 호출 → raw device 권한 부재 → `nvme_cli_available=False` 오탐. `sudo -S` + `SUDO_PASSWORD` 전달로 수정.
+
+3. **GPU 분류 + gpu_burn 옵션 분기** (신규 요구):
+   - `classify_gpu()`: nvidia-smi name 기준 gaming/datacenter 판별
+   - GeForce 포함 → gaming (혼합 시 보수적), A/H/L/T/V100/RTX A·PRO/Tesla/Quadro → datacenter
+   - gpu_burn 실행: gaming=옵션 없음, datacenter=`-tc`
+   - `-d` (FP64) 제거
+
+4. **SSH env transport latent bug** (중대):
+   - 대상 서버 sshd `AcceptEnv LANG LC_*` 만 허용 → `SUDO_PASSWORD`, `GPU_BURNIN_DURATION`, `CPU_BURNIN_DURATION`, `NCCL_ALLREDUCE_MIN_BW_*` 등 **모든 env 파라미터가 전달 안 되던 상태**
+   - 지금까지 실행 = 스크립트 default 값만 사용
+   - `workers/inspect.py:_run_script` 를 inline prefix 방식으로 변경: `KEY=val python3 script.py`, `shlex.quote` shell escape
+
+**실서버 검증 결과**:
+
+| 항목 | Before | After |
+|------|--------|-------|
+| sw_gpu_hw count | 8 (오탐) | **4** |
+| sw_storage_sw | fail error=exception | **pass**, 17 nvme SMART OK |
+| stress_gpu gpu_class | (없음) | **gaming** |
+| gpu_burn 옵션 | `-d -tc` | (none, gaming 모드) |
+| power_ratio | 30% | **100%** (peak 452W/450W) |
+| peak_temp | 36°C | **75°C** |
+| 판정 | fail | warn |
+
+**데이터센터 GPU 실기 검증은 미완료** (A100/H100 보유 환경 필요).
+
+**테스트**: 276 passed, 8 skipped
+
+---
+
 ## 15차 세션 완료 항목
 
 ### PR #35 — stress 도구 빌드 경로 + baseline 엄격화
