@@ -97,7 +97,10 @@ ruff check . && ruff format --check .
 
 ## 열린 PR 목록
 
-(없음)
+| PR | 브랜치 | 내용 |
+|----|--------|------|
+| #36 | docs/harness-update-pr35 | harness 문서 PR #35 반영 — merge 대기 |
+| #37 | fix/gpu-classification-and-preflight-bugs | GPU 분류 + preflight 버그 4건 + SSH env transport — merge 대기 |
 
 최근 머지: #33, #34, #35
 
