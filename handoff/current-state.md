@@ -1,16 +1,16 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-16 (17차 세션)
+> 최종 업데이트: 2026-04-16 (17차 세션, 2회차)
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
 
 ## 추천 시작점
 
-**다음 작업**: 리포트 개편 PR C — 차트 삽입 (matplotlib → PNG → LaTeX)
+**다음 작업**: 부하 테스트 시계열 로깅 + 리포트 차트 삽입 (PR C)
 
 **병행 대기**:
-- PR #39 (feat/report-structure) — 리뷰 반영 완료, merge 대기
+- PR #40 (리포트 리뷰 반영 + KST + 진단메시지 + AMD 온도) — merge 대기
 - WebGUI 프론트엔드 (보류 — 기술 방향 미확정)
 
 **전제조건 확인**:
@@ -22,78 +22,89 @@ ruff check . && ruff format --check .
 
 ---
 
-## 리포트 개편 작업 계획 (진행 중)
+## 17차 세션 (2026-04-16) 완료 항목
 
-### PR 진행 현황
+### PR #38 (MERGED) — P0 버그 3건
+1. `\textemdash` 이중이스케이프 → U+2014 em dash 직접 사용
+2. 상세 컬럼 줄바꿈 (`detail_latex` 필터)
+3. `fail_items`/`warn_items` 키 불일치 수정
 
-| PR | 브랜치 | 내용 | 상태 |
-|----|--------|------|------|
-| #38 | fix/report-p0-bugs | P0 버그 3건 수정 | **MERGED** |
-| #39 | feat/report-structure | PR B — 구조 개편 | OPEN (리뷰 반영 완료) |
-| — | — | PR C — 차트 삽입 | 미시작 |
-| — | — | PR D — 신규 섹션 | 미시작 |
-| — | — | PR E — TikZ/tcolorbox (옵션) | 미시작 |
-
-### PR #38 완료 내용 (MERGED)
-
-1. `templates/report.tex.j2:131` `"\textemdash"` → `"—"` (U+2014) 이중이스케이프 수정
-2. `_detail_latex` 필터: `|` 기준 분리 → `\newline` 재결합 (상세 컬럼 잘림 수정)
-3. `report.py` `fail_items`/`warn_items` 키 불일치 수정 (판정 섹션 빈칸)
-4. fallback `overall` 수정: `"fail" if fail_reasons else "warn" if warn_reasons else "fail"` (PR #39에 포함)
-
-### PR #39 완료 내용 (OPEN — merge 대기)
-
-**`workers/report.py`**:
-- `KNOWN_FIELDS`: 14개 스크립트별 표시 필드 목록
-- `parse_detail()`: `"key=val|key2=val2"` → dict
-- `_build_phase_map()`: profile JSON에서 script→phase 역방향 매핑 자동 생성
-- `_enrich_results()`: check_results에 `phase`, `display_fields` 보강
-- `_fields_latex()` Jinja2 필터 추가
-- context: `preflight_results`, `post_install_results`, `collect_results`, `unknown_results`, `pass_count`, `warn_count`, `fail_count`
-- XLSX: Phase 컬럼 추가 (col 2)
-- fallback overall 버그 수정 (PR #38 리뷰 반영)
-
-**`templates/report.tex.j2`** (전면 재작성):
+### PR #39 (MERGED) — 구조 개편
 - Executive Summary: PASS/WARN/FAIL 카운트 카드
-- Phase 섹션 헤더: Preflight(#1A5C8A) / Post-install(#2D6A4F) / 로그 수집(#5C4B1A) / 기타(#555555)
+- Phase별 섹션 분리 (Preflight/Post-install/로그수집/기타)
+- `KNOWN_FIELDS` 기반 구조화된 상세 표시 (14개 스크립트)
+- `parse_detail()`, `_build_phase_map()`, `_enrich_results()` 추가
 - `render_phase_table` Jinja2 macro
-- 상세 컬럼: `display_fields | fields_latex` 필터
-- REJECTED 배지: rejectedbg(#FFE0B2)/rejectedtext(#E65100) 주황색
-- `\statusbadge` 데드코드 삭제
+- fallback `overall` 로직 수정 (warn-only/empty 케이스 오판정 방지)
 
-### PR C — 차트 삽입 (다음 작업)
+### PR #40 (OPEN) — 리뷰 반영 + 실서버 검증 피드백
+**리포트**:
+- REJECTED 주황색 (failbg와 구별), preflight 색상 중복 수정, `\statusbadge` 데드코드 삭제
+- 시간 표시 UTC → **KST** 변환 (`astimezone(KST)`)
+- `parse_detail()`: `WARN:/FAIL:/INFO:` 진단 메시지 별도 수집
+- `_fields_latex()`: WARN=주황/FAIL=빨강/INFO=파랑 색상 강조
+- `KNOWN_FIELDS`: stress_gpu/stress_cpu/nccl_bandwidth에 `tool`, `duration_s` 추가 (실행 여부 명시)
+- `KNOWN_FIELDS.nccl_bandwidth`: `min_bw_*_gbs`, `gpu_count` 추가
 
-```
-workers/report.py에 _generate_charts() 추가
-  - chart_gpu_stress.png: peak_temp/power/util 3-bar (matplotlib)
-  - chart_nccl.png: bw_2gpu/bw_4gpu vs 기준선
-  - chart_status_pie.png: PASS/WARN/FAIL 도넛
-templates/report.tex.j2에 \includegraphics 삽입
-```
+**AMD CPU 온도 센서 지원** (실서버 AMD EPYC 7313 × 2 검증):
+- `sw_cpu.py`: hwmon sysfs 우선 탐색 (`coretemp` Package / `k10temp` Tctl-Tdie)
+- `stress_cpu.py`: 동일하게 hwmon + sensors 정규식에 `Tctl|Tdie` 추가
+- `peak_temp=0` (측정 실패) → WARN 승격 + `peak_temp_c=unknown` 표시
 
-### PR D — 신규 섹션
+### 실서버 검증 기록
+- Job `b69ce10d-3bdf-4568-ad9c-958143371c36` (10.100.1.23, 2026-04-16 13:41 KST)
+- 소요: 10분, 14 checks, 판정: **FAIL**
+- 검증된 항목:
+  - gpu_burn 정상 실행 (peak_temp_c=73, power_ratio=100%, avg_util=96%)
+  - nccl-tests 정상 실행 (bw_2gpu=10.38, bw_4gpu=5.04)
+  - FAIL 사유: `nccl_bandwidth.bw_2gpu_gbs=10.38 (fail_below=30)` — 2 GPU all_reduce 기준 미달
+- 리포트 PDF: `~/report_full_test.pdf`
 
-```
-- H/W 수동 검수 (Section 2): jobs.hw_manual_checks JSON 8항목 체크리스트 + 서명란
-- sys-config 적용 결과 (Section 6): GRUB/governor/PM/auto_update 체크박스 테이블
-- Agent 사용 내역 (Section 5): Inspect/Verify/SW Planner 호출 여부 + 사유
-- 부록 — 로그 경로 안내 (Section 7)
-```
+---
+
+## 다음 작업 — PR C (차트 삽입)
+
+사용자 피드백: **"부하테스트 시계열 그래프 필요"** — bar chart 아닌 time series plot 필요.
+
+### 작업 분할
+
+**Step 1: 시계열 데이터 수집**
+- `stress_gpu.py`: nvidia-smi 샘플을 `{job_id}/inspect_raw/stress_gpu_timeseries.jsonl`에 append
+  - 필드: `(timestamp, temp_c, power_w, util_pct, freq_mhz, per_gpu_dict)`
+- `stress_cpu.py`: 기존 5초 간격 loop에서 샘플을 `stress_cpu_timeseries.jsonl`에 append
+  - 필드: `(timestamp, peak_temp_c, freq_mhz, util_pct)`
+- `nccl_bandwidth.py`: all_reduce_perf 단일 측정이라 시계열 아님 → bar chart로 처리
+
+**Step 2: matplotlib 차트 생성**
+- `workers/report.py`에 `_generate_charts(job_id, context)` 추가
+- `chart_gpu_stress.png`: 시계열 (온도/전력/사용률 3-panel)
+- `chart_cpu_stress.png`: 시계열 (온도/주파수/사용률 3-panel)
+- `chart_nccl.png`: bar chart (bw_2gpu/bw_4gpu vs 기준선)
+- `chart_status_donut.png`: PASS/WARN/FAIL 도넛
+
+**Step 3: LaTeX 템플릿**
+- 각 stress 섹션 뒤에 `\includegraphics` 삽입
+- Executive Summary에 status donut 삽입
 
 ### 관련 파일
 
 | 파일 | 역할 |
 |------|------|
-| `workers/report.py` | Celery task, context 조립, xelatex 컴파일 |
-| `templates/report.tex.j2` | LaTeX 템플릿 |
-| `checks/profiles/gpu_server.json` | `validation.rules` (기준값 출처) |
-| `.claude/rules/report.md` | 리포트 규칙 (목표 스펙) |
+| `checks/base/post_install/stress_gpu.py` | nvidia-smi 샘플링 (시계열 로깅 추가 필요) |
+| `checks/base/post_install/stress_cpu.py` | 기존 5초 loop (샘플 JSONL 저장 추가) |
+| `workers/report.py` | matplotlib chart 생성 함수 추가 |
+| `templates/report.tex.j2` | `\includegraphics` 삽입 |
+| `pyproject.toml` | `matplotlib` 의존성 추가 필요 |
 
-### 실서버 테스트 job_id 참고
+---
 
-- 최종 성공: `87303440-60f1-4773-acac-068e5cbb7482` (RTX 4090 x4, PR #37 검증용)
-- 리포트 경로: `/srv/inspection/results/{job_id}/`
-- 다운로드: `curl -sL http://localhost:8000/api/reports/{job_id}/pdf -o report.pdf`
+## 향후 PR 계획
+
+| PR | 내용 | 우선순위 |
+|----|------|---------|
+| C | 부하 테스트 시계열 로깅 + 차트 삽입 | 다음 |
+| D | 신규 섹션 (H/W 수동검수, sys-config, Agent 사용내역, 로그 안내) | C 이후 |
+| E (옵션) | TikZ Phase 파이프라인 흐름도, tcolorbox | 여력 있으면 |
 
 ---
 
@@ -101,9 +112,9 @@ templates/report.tex.j2에 \includegraphics 삽입
 
 | PR | 브랜치 | 내용 |
 |----|--------|------|
-| #39 | feat/report-structure | PR B — 구조 개편, merge 대기 |
+| #40 | feat/report-refinements-and-amd-temp | 리포트 개선 + AMD 온도, merge 대기 |
 
-최근 머지: #33, #34, #35, #36, #37, #38
+최근 머지: #33, #34, #35, #36, #37, #38, #39
 
 ---
 
@@ -129,8 +140,9 @@ templates/report.tex.j2에 \includegraphics 삽입
 | harness 문서 갱신 | #36 | ✅ |
 | GPU 분류 + preflight 버그 4건 + SSH env transport | #37 | ✅ |
 | report P0 버그 3건 (textemdash/컬럼잘림/verdict빈칸) | #38 | ✅ |
-| report 구조 개편 (Phase분리/Executive Summary/KNOWN_FIELDS) | #39 | 🔄 merge 대기 |
-| **리포트 차트 삽입** | — | ☐ |
+| report 구조 개편 (Phase분리/Executive Summary/KNOWN_FIELDS) | #39 | ✅ |
+| report 리뷰 반영 + KST + 진단메시지 + AMD CPU 온도 | #40 | 🔄 merge 대기 |
+| **부하 테스트 시계열 + 차트** | — | ☐ 다음 작업 |
 | **리포트 신규 섹션** (H/W 수동검수 등) | — | ☐ |
 | **WebGUI 프론트엔드** | — | ☐ 보류 |
 
