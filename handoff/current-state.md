@@ -76,39 +76,34 @@ ruff check . && ruff format --check .
 
 ---
 
-## 다음 작업 — PR C (차트 삽입)
+## PR C 작업 현황 (브랜치 `feat/stress-timeseries-and-charts`)
 
-사용자 피드백: **"부하테스트 시계열 그래프 필요"** — bar chart 아닌 time series plot 필요.
+사용자 피드백: **"부하테스트 시계열 그래프 필요"** — 구현 완료, PR 생성 대기.
 
-### 작업 분할
+### 커밋된 변경 (3건)
 
-**Step 1: 시계열 데이터 수집**
-- `stress_gpu.py`: nvidia-smi 샘플을 `{job_id}/inspect_raw/stress_gpu_timeseries.jsonl`에 append
-  - 필드: `(timestamp, temp_c, power_w, util_pct, freq_mhz, per_gpu_dict)`
-- `stress_cpu.py`: 기존 5초 간격 loop에서 샘플을 `stress_cpu_timeseries.jsonl`에 append
-  - 필드: `(timestamp, peak_temp_c, freq_mhz, util_pct)`
-- `nccl_bandwidth.py`: all_reduce_perf 단일 측정이라 시계열 아님 → bar chart로 처리
+**`4f16756` — 시계열 로깅 + matplotlib 차트 + 냉각 일관성 지표**
+- `stress_gpu.py` (+279 LOC): nvidia-smi 샘플 → `{job_id}/inspect_raw/stress_gpu_timeseries.jsonl` append
+- `stress_cpu.py` (+69 LOC): 5초 loop 샘플 → `stress_cpu_timeseries.jsonl`
+- `workers/report_charts.py` 신규 (+512 LOC): matplotlib 차트 생성 모듈
+- `workers/report.py` (+100 LOC): `_generate_charts()` 통합
+- `templates/report.tex.j2` (+34 LOC): `\includegraphics` 삽입
+- `pyproject.toml`: matplotlib 의존성 추가
+- `workers/inspect.py` (+13 LOC): 차트 생성 훅
 
-**Step 2: matplotlib 차트 생성**
-- `workers/report.py`에 `_generate_charts(job_id, context)` 추가
-- `chart_gpu_stress.png`: 시계열 (온도/전력/사용률 3-panel)
-- `chart_cpu_stress.png`: 시계열 (온도/주파수/사용률 3-panel)
-- `chart_nccl.png`: bar chart (bw_2gpu/bw_4gpu vs 기준선)
-- `chart_status_donut.png`: PASS/WARN/FAIL 도넛
+**`591ba3e` — CPU 멀티 소켓 시계열 + 폰트 정책**
+- `stress_cpu.py`: 소켓별 시계열 분리
+- `workers/report_charts.py` (+113 LOC): 멀티 소켓 렌더링
+- `Dockerfile`: Roboto/Consolas 폰트 설치
+- `templates/report.tex.j2`: fontspec 설정
 
-**Step 3: LaTeX 템플릿**
-- 각 stress 섹션 뒤에 `\includegraphics` 삽입
-- Executive Summary에 status donut 삽입
+**`40ead6f` — 리포트 표시 개선**
+- `sw_gpu_hw.py` (+115 LOC): PCIe 인식 수정
+- `workers/report.py` (+58 LOC): `display_name` 추가
+- `templates/report.tex.j2`: 표시 조정
 
-### 관련 파일
-
-| 파일 | 역할 |
-|------|------|
-| `checks/base/post_install/stress_gpu.py` | nvidia-smi 샘플링 (시계열 로깅 추가 필요) |
-| `checks/base/post_install/stress_cpu.py` | 기존 5초 loop (샘플 JSONL 저장 추가) |
-| `workers/report.py` | matplotlib chart 생성 함수 추가 |
-| `templates/report.tex.j2` | `\includegraphics` 삽입 |
-| `pyproject.toml` | `matplotlib` 의존성 추가 필요 |
+### Uncommitted (1건)
+- `templates/report.tex.j2`: 상세 컬럼 `\scriptsize\ttfamily` — 커밋 여부 결정 필요
 
 ---
 
