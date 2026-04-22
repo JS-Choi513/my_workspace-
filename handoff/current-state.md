@@ -1,6 +1,6 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-16 (17차 세션, 2회차)
+> 최종 업데이트: 2026-04-17 (17차 세션, 3회차)
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
@@ -10,7 +10,6 @@
 **다음 작업**: 부하 테스트 시계열 로깅 + 리포트 차트 삽입 (PR C)
 
 **병행 대기**:
-- PR #40 (리포트 리뷰 반영 + KST + 진단메시지 + AMD 온도) — merge 대기
 - WebGUI 프론트엔드 (보류 — 기술 방향 미확정)
 
 **전제조건 확인**:
@@ -37,7 +36,7 @@ ruff check . && ruff format --check .
 - `render_phase_table` Jinja2 macro
 - fallback `overall` 로직 수정 (warn-only/empty 케이스 오판정 방지)
 
-### PR #40 (OPEN) — 리뷰 반영 + 실서버 검증 피드백
+### PR #40 (MERGED) — 리뷰 반영 + 실서버 검증 피드백
 **리포트**:
 - REJECTED 주황색 (failbg와 구별), preflight 색상 중복 수정, `\statusbadge` 데드코드 삭제
 - 시간 표시 UTC → **KST** 변환 (`astimezone(KST)`)
@@ -50,6 +49,10 @@ ruff check . && ruff format --check .
 - `sw_cpu.py`: hwmon sysfs 우선 탐색 (`coretemp` Package / `k10temp` Tctl-Tdie)
 - `stress_cpu.py`: 동일하게 hwmon + sensors 정규식에 `Tctl|Tdie` 추가
 - `peak_temp=0` (측정 실패) → WARN 승격 + `peak_temp_c=unknown` 표시
+
+### PR #41 (MERGED) — CI 자동 리뷰 워크플로우
+- 자동 리뷰 워크플로우 추가 + 기존 workflow 정리
+- `id-token: write` 권한 추가 (OIDC 토큰 인증 실패 수정)
 
 ### 실서버 검증 기록
 - Job `b69ce10d-3bdf-4568-ad9c-958143371c36` (10.100.1.23, 2026-04-16 13:41 KST)
