@@ -150,7 +150,7 @@ ruff check . && ruff format --check .
 | report 구조 개편 (Phase분리/Executive Summary/KNOWN_FIELDS) | #39 | ✅ |
 | report 리뷰 반영 + KST + 진단메시지 + AMD CPU 온도 | #40 | ✅ |
 | CI 자동 리뷰 워크플로우 + OIDC 권한 수정 | #41 | ✅ |
-| **부하 테스트 시계열 + 차트** | — | ☐ 다음 작업 |
+| 부하 테스트 시계열 + matplotlib 차트 + CPU 멀티소켓 + 폰트 정책 | — | 🔄 브랜치 작업 완료, PR 생성 대기 |
 | **리포트 신규 섹션** (H/W 수동검수 등) | — | ☐ |
 | **WebGUI 프론트엔드** | — | ☐ 보류 |
 
