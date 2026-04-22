@@ -142,7 +142,8 @@ ruff check . && ruff format --check .
 | GPU 분류 + preflight 버그 4건 + SSH env transport | #37 | ✅ |
 | report P0 버그 3건 (textemdash/컬럼잘림/verdict빈칸) | #38 | ✅ |
 | report 구조 개편 (Phase분리/Executive Summary/KNOWN_FIELDS) | #39 | ✅ |
-| report 리뷰 반영 + KST + 진단메시지 + AMD CPU 온도 | #40 | 🔄 merge 대기 |
+| report 리뷰 반영 + KST + 진단메시지 + AMD CPU 온도 | #40 | ✅ |
+| CI 자동 리뷰 워크플로우 + OIDC 권한 수정 | #41 | ✅ |
 | **부하 테스트 시계열 + 차트** | — | ☐ 다음 작업 |
 | **리포트 신규 섹션** (H/W 수동검수 등) | — | ☐ |
 | **WebGUI 프론트엔드** | — | ☐ 보류 |
