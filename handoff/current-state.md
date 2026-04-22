@@ -1,13 +1,24 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-17 (17차 세션, 3회차)
+> 최종 업데이트: 2026-04-17 (18차 세션)
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
 
 ## 추천 시작점
 
-**다음 작업**: 부하 테스트 시계열 로깅 + 리포트 차트 삽입 (PR C)
+**다음 작업**: PR C 브랜치 마무리 → PR 생성
+
+**현재 상태**:
+- 브랜치 `feat/stress-timeseries-and-charts` (origin 동기화 완료, **PR 미생성**)
+- 3 commits ahead of `origin/main`: 시계열 로깅/차트 + CPU 멀티소켓/폰트 + display_name/sw_gpu_hw
+- **1개 uncommitted** (`templates/report.tex.j2` — 상세 컬럼 폰트 `\scriptsize\ttfamily`로 축소)
+
+**다음 액션**:
+1. uncommitted 변경 커밋 또는 폐기 결정
+2. `pytest tests/ -x -q` + `ruff check . && ruff format --check .`
+3. 실서버 재검증 (시계열 차트 PDF 확인)
+4. `gh pr create` → PR C 발행
 
 **병행 대기**:
 - WebGUI 프론트엔드 (보류 — 기술 방향 미확정)
