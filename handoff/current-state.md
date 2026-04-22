@@ -113,12 +113,9 @@ ruff check . && ruff format --check .
 
 ## 열린 PR 목록
 
-| PR | 브랜치 | 내용 |
-|----|--------|------|
-| #40 | feat/report-refinements-and-amd-temp | 리포트 개선 + AMD 온도, merge 대기 |
-| #41 | ci/auto-review-workflow | 자동 리뷰 워크플로우 추가 + claude-fix 정리 |
+없음 (모든 PR 머지 완료).
 
-최근 머지: #33, #34, #35, #36, #37, #38, #39
+최근 머지: #33, #34, #35, #36, #37, #38, #39, #40, #41
 
 ---
 
