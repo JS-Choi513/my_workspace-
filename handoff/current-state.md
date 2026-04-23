@@ -1,24 +1,24 @@
 # Handoff — Inspection System v2
 
-> 최종 업데이트: 2026-04-17 (18차 세션)
+> 최종 업데이트: 2026-04-23
 > 이 파일의 범위: **다음 작업 + 블로커 + WARNING** 만. 아키텍처·구현 현황 → 프로젝트 `CLAUDE.md`
 
 ---
 
 ## 추천 시작점
 
-**다음 작업**: PR C 브랜치 마무리 → PR 생성
+**다음 작업**: PR D — 리포트 신규 섹션 (H/W 수동검수, sys-config 결과, Agent 사용내역, 로그 위치 안내)
 
 **현재 상태**:
-- 브랜치 `feat/stress-timeseries-and-charts` (origin 동기화 완료, **PR 미생성**)
-- 3 commits ahead of `origin/main`: 시계열 로깅/차트 + CPU 멀티소켓/폰트 + display_name/sw_gpu_hw
-- **1개 uncommitted** (`templates/report.tex.j2` — 상세 컬럼 폰트 `\scriptsize\ttfamily`로 축소)
+- `main` tip: `cd04b4e` (PR #42 리뷰 4건 반영 — CodeQL 경고 정리)
+- PR #42 머지 완료 (2026-04-22) — 부하 테스트 시계열 + matplotlib 차트 + 멀티소켓/폰트/표시 개선
+- 열린 PR 없음, uncommitted 없음
 
 **다음 액션**:
-1. uncommitted 변경 커밋 또는 폐기 결정
-2. `pytest tests/ -x -q` + `ruff check . && ruff format --check .`
-3. 실서버 재검증 (시계열 차트 PDF 확인)
-4. `gh pr create` → PR C 발행
+1. PR D 범위 확정 (리포트 섹션 4종: H/W 수동검수 / sys-config / Agent 사용내역 / 로그 안내)
+2. 브랜치 생성 `feat/report-additional-sections` 등
+3. `pytest tests/ -x -q` + `ruff check . && ruff format --check .`
+4. `gh pr create`
 
 **병행 대기**:
 - WebGUI 프론트엔드 (보류 — 기술 방향 미확정)
@@ -26,9 +26,38 @@
 **전제조건 확인**:
 ```bash
 git checkout main && git pull
-pytest tests/ -x -q   # 278 passed, 8 skipped
+pytest tests/ -x -q   # 278 passed, 8 skipped 기대
 ruff check . && ruff format --check .
 ```
+
+---
+
+## 18차 세션 (2026-04-22) 완료 항목
+
+### PR #42 (MERGED 2026-04-22) — 부하 테스트 시계열 + 차트 + 표시 개선
+4 commits: `4f16756` + `591ba3e` + `40ead6f` + `6747b05`
+
+**시계열 로깅 + matplotlib 차트**:
+- `stress_gpu.py` (+279 LOC): nvidia-smi 샘플 → `{job_id}/inspect_raw/stress_gpu_timeseries.jsonl`
+- `stress_cpu.py` (+69 LOC → 멀티소켓 분리): 5초 loop 샘플 → `stress_cpu_timeseries.jsonl`
+- `workers/report_charts.py` 신규 (~600 LOC): matplotlib 3-panel 시계열 + NCCL bar + status donut
+- `workers/report.py` (+100 LOC): `_generate_charts()` 통합
+- `templates/report.tex.j2`: `\includegraphics` 삽입
+- `pyproject.toml`: matplotlib 의존성 추가
+- 냉각 일관성 지표 포함
+
+**CPU 멀티 소켓 + 폰트 정책**:
+- AMD EPYC 2소켓 등 소켓별 시계열 분리
+- `Dockerfile`: Roboto/Consolas 폰트 설치
+- `templates/report.tex.j2`: fontspec 설정
+
+**리포트 표시 개선**:
+- `display_name` 14종 매핑 (스크립트명 → 한글)
+- `sw_gpu_hw.py` (+115 LOC): PCIe 인식 수정 (sudo 경유 `lspci -vv`, 모든 GPU 조사, LnkCap + LnkSta 병기)
+- 상세 컬럼 폰트 `\scriptsize\ttfamily`로 축소
+
+### 리뷰 반영 (`cd04b4e`)
+- PR #42 리뷰 4건 — CodeQL 경고 정리
 
 ---
 
