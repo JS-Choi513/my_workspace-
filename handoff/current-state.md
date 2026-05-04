@@ -10,8 +10,9 @@
 **다음 작업**: PR D — 리포트 신규 섹션 (H/W 수동검수, sys-config 결과, Agent 사용내역, 로그 위치 안내)
 
 **현재 상태**:
-- `main` tip: `cd04b4e` (PR #42 리뷰 4건 반영 — CodeQL 경고 정리)
-- PR #42 머지 완료 (2026-04-22) — 부하 테스트 시계열 + matplotlib 차트 + 멀티소켓/폰트/표시 개선
+- `main` tip: `3193855` (PR #45 flower 의존성 추가)
+- PR #43·#44·#45 모두 머지 완료 (2026-04-23)
+- PR #44 실서버 E2E 검증 완료 (Job `0d01e2e5`, gadget-burn 교체 확인)
 - 열린 PR 없음, uncommitted 없음
 
 **다음 액션**:
@@ -23,12 +24,57 @@
 **병행 대기**:
 - WebGUI 프론트엔드 (보류 — 기술 방향 미확정)
 
+**환경 주의**:
+- `COMPOSE_FILE=/opt/inspection-system/inspection-system/docker-compose.yml` 환경변수가 shell에 남아있으면 **구버전 deprecated 경로로 redirect**되어 compose 명령이 오작동. `unset COMPOSE_FILE` 필요. `/opt/...` 경로 deprecated, 전부 무시.
+
 **전제조건 확인**:
 ```bash
+unset COMPOSE_FILE
 git checkout main && git pull
 pytest tests/ -x -q   # 278 passed, 8 skipped 기대
 ruff check . && ruff format --check .
 ```
+
+---
+
+## 19차 세션 (2026-04-23) 완료 항목
+
+### PR #43 (MERGED) — PR #42 리뷰 대응 (CodeQL 경고 정리)
+- 2 commits: `cd04b4e` + `2687e6c`
+- github-code-quality bot 5건 "Empty except" 경고 해소
+- `stress_gpu.py`의 `except (ValueError, TypeError): pass` 5개 블록에 `# [N/A] 등 비정상 문자열 시 ... 무시 (베스트에포트)` inline 주석 추가
+
+### PR #44 (MERGED) — `gpu_burn` → `gadget-burn` 도구 교체
+- 1 commit: `ea52f63`
+- `wilicc/gpu-burn` → `DEEPGadget/gadget-burn` (MIT, 사내 도구, NVIDIA Pascal~Blackwell)
+- 바이너리 경로·CLI 통일 (`-t <dur>` 공통, gaming/datacenter 분기 제거)
+- `tool` 필드 값 `gpu_burn` → `gadget-burn` (스키마 변경 없음)
+- 6 파일, +46 -51
+
+### PR #45 (MERGED) — flower 의존성 추가
+- 1 commit: `3193855`
+- `pyproject.toml`에 `flower>=2.0` — celery 서브커맨드 `flower` 없이 컨테이너 exit 2 하던 문제 해소
+- `:5555` HTTP 200 검증 완료
+
+### 실서버 E2E 검증 — PR #44 검증 (Job `0d01e2e5-1247-42a1-9979-48e8a6daeb1c`)
+- 10.100.1.23 (AMD EPYC 7313 x2 + RTX 4090 x4), 2026-04-23 16:50 KST
+- 소요: 약 10분, 14 checks (pass 9 / warn 3 / fail 2), 판정: **FAILED**
+- **gadget-burn 교체 핵심 검증**:
+  - `tool=gadget-burn` 필드가 inspect_raw JSON + 리포트 PDF 상세 컬럼 모두에 정확히 표시
+  - `duration_s=300` CLI 옵션 정상 인식
+  - `gpu_class=gaming` (RTX 4090 detail 표시용 유지 확인)
+  - 피크 70°C, 풀로드 95%, HW throttle 0, ECC 0 — 스트레스 데이터 수집 정상
+- **실서버 자체 이슈 재현** (이전 Job b69ce10d와 일관):
+  - `nccl_bandwidth.bw_2gpu_gbs=10.24` (이전 10.38, 오차 1.4%) → FAIL
+  - `nccl_bandwidth.bw_4gpu_gbs=4.93` (이전 5.04, 오차 2.2%) → FAIL
+  - `stress_gpu.cooling_consistency_score=34` (GPU 간 초반 peak spread 25°C) → FAIL
+- 리포트 PDF: `~/report_gadget_burn.pdf` (284 KB, 4페이지) — 시계열 차트·heatmap·NCCL bar 정상
+
+### 배포 워크플로우 관련 학습
+- **`COMPOSE_FILE` 환경변수**가 구버전 `/opt/inspection-system/inspection-system/docker-compose.yml` 가리키고 있어 `docker compose` 명령이 구버전 경로로 redirect됐음
+- `/opt/...` 경로는 **deprecated**. `unset COMPOSE_FILE` 후 `/home/dg/workspace/projects/inspection-system/`에서 배포
+- 증상: `worker_sw_install` 서비스 파싱 누락, alembic versions 3개 누락 — 모두 같은 원인의 파생
+- 영구 해결: shell rc 파일에서 `COMPOSE_FILE` export 제거 (사용자 조치 사안)
 
 ---
 
@@ -105,52 +151,20 @@ ruff check . && ruff format --check .
 
 ---
 
-## PR C 작업 현황 (브랜치 `feat/stress-timeseries-and-charts`)
-
-사용자 피드백: **"부하테스트 시계열 그래프 필요"** — 구현 완료, PR 생성 대기.
-
-### 커밋된 변경 (3건)
-
-**`4f16756` — 시계열 로깅 + matplotlib 차트 + 냉각 일관성 지표**
-- `stress_gpu.py` (+279 LOC): nvidia-smi 샘플 → `{job_id}/inspect_raw/stress_gpu_timeseries.jsonl` append
-- `stress_cpu.py` (+69 LOC): 5초 loop 샘플 → `stress_cpu_timeseries.jsonl`
-- `workers/report_charts.py` 신규 (+512 LOC): matplotlib 차트 생성 모듈
-- `workers/report.py` (+100 LOC): `_generate_charts()` 통합
-- `templates/report.tex.j2` (+34 LOC): `\includegraphics` 삽입
-- `pyproject.toml`: matplotlib 의존성 추가
-- `workers/inspect.py` (+13 LOC): 차트 생성 훅
-
-**`591ba3e` — CPU 멀티 소켓 시계열 + 폰트 정책**
-- `stress_cpu.py`: 소켓별 시계열 분리
-- `workers/report_charts.py` (+113 LOC): 멀티 소켓 렌더링
-- `Dockerfile`: Roboto/Consolas 폰트 설치
-- `templates/report.tex.j2`: fontspec 설정
-
-**`40ead6f` — 리포트 표시 개선**
-- `sw_gpu_hw.py` (+115 LOC): PCIe 인식 수정
-- `workers/report.py` (+58 LOC): `display_name` 추가
-- `templates/report.tex.j2`: 표시 조정
-
-### Uncommitted (1건)
-- `templates/report.tex.j2`: 상세 컬럼 `\scriptsize\ttfamily` — 커밋 여부 결정 필요
-
----
-
 ## 향후 PR 계획
 
 | PR | 내용 | 우선순위 |
 |----|------|---------|
-| C | 부하 테스트 시계열 로깅 + 차트 삽입 | 다음 |
-| D | 신규 섹션 (H/W 수동검수, sys-config, Agent 사용내역, 로그 안내) | C 이후 |
+| D | 신규 섹션 (H/W 수동검수, sys-config, Agent 사용내역, 로그 안내) | 다음 |
 | E (옵션) | TikZ Phase 파이프라인 흐름도, tcolorbox | 여력 있으면 |
 
 ---
 
 ## 열린 PR 목록
 
-없음 (모든 PR 머지 완료). PR C는 브랜치만 존재, PR 미생성.
+없음 (모든 PR 머지 완료).
 
-최근 머지: #33, #34, #35, #36, #37, #38, #39, #40, #41
+최근 머지: #37, #38, #39, #40, #41, #42, #43, #44, #45
 
 ---
 
@@ -179,8 +193,11 @@ ruff check . && ruff format --check .
 | report 구조 개편 (Phase분리/Executive Summary/KNOWN_FIELDS) | #39 | ✅ |
 | report 리뷰 반영 + KST + 진단메시지 + AMD CPU 온도 | #40 | ✅ |
 | CI 자동 리뷰 워크플로우 + OIDC 권한 수정 | #41 | ✅ |
-| 부하 테스트 시계열 + matplotlib 차트 + CPU 멀티소켓 + 폰트 정책 | — | 🔄 브랜치 작업 완료, PR 생성 대기 |
-| **리포트 신규 섹션** (H/W 수동검수 등) | — | ☐ |
+| 부하 테스트 시계열 + matplotlib 차트 + 멀티소켓/폰트/표시 개선 | #42 | ✅ |
+| PR #42 리뷰 대응 (CodeQL empty except 5건) | #43 | ✅ |
+| `gpu_burn` → `gadget-burn` 도구 교체 + 실서버 E2E 검증 | #44 | ✅ |
+| flower 의존성 추가 (celery 서브커맨드 복구) | #45 | ✅ |
+| **리포트 신규 섹션** (H/W 수동검수, sys-config, Agent 내역, 로그 안내) | — | ☐ |
 | **WebGUI 프론트엔드** | — | ☐ 보류 |
 
 ---
