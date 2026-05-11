@@ -28,3 +28,6 @@
 이 워크스페이스 하네스(인덱스·공통 규칙·템플릿) 자체에 대한 변경 사항이 있을 때 기록.
 
 - 2026-05-11: 멀티프로젝트 구조로 재구성. inspection-system 전용 context/handoff 회수, rules 중립화.
+- 2026-05-11: 상위 문서 편중성 추가 정리.
+  - `CLAUDE.md` 활성 프로젝트 표에서 "상태" 컬럼 제거 (handoff와 중복, stale 위험).
+  - `context/target-servers.md` 헤더·"프로파일" 섹션 제거 (inspection-system 내부 파일 경로 참조). inspection-system은 자체 사본 보유 중.
