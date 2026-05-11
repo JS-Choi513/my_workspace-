@@ -13,13 +13,14 @@
 
 ## 활성 프로젝트
 
-| 프로젝트 | 경로 | 언어·스택 | 상태 | repo |
-|---------|------|----------|------|------|
-| inspection-system | `projects/inspection-system/` | Python (FastAPI + Celery + PostgreSQL) | v2 리팩토링 진행 중 | 팀 공유 (DEEPGadget/inspection-system) |
-| p2p-perf-monitor | `projects/p2p-perf-monitor/` | Python (FastAPI) + SvelteKit | Phase 4 진행 중 | 팀 공유 (DEEPGadget/p2p-perf-monitor) |
-| gadgetron | `projects/gadgetron/` | Rust + npm (web UI) | 외부 clone (하네스 미정비) | 외부 |
+| 프로젝트 | 경로 | 언어·스택 | repo |
+|---------|------|----------|------|
+| inspection-system | `projects/inspection-system/` | Python (FastAPI + Celery + PostgreSQL) | 팀 공유 (DEEPGadget/inspection-system) |
+| p2p-perf-monitor | `projects/p2p-perf-monitor/` | Python (FastAPI) + SvelteKit | 팀 공유 (DEEPGadget/p2p-perf-monitor) |
+| gadgetron | `projects/gadgetron/` | Rust + npm (web UI) | 외부 |
 
 각 프로젝트는 **자체 git repo**. `projects/`는 워크스페이스 git에서 ignore (`.gitignore` 참조).
+진행 상태(현재 phase·블로커)는 `handoff/current-state.md` 단일 소스.
 
 ---
 
