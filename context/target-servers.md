@@ -109,11 +109,3 @@ NVIDIA 계열이 주력. 대부분의 NVIDIA GPU 탑재 가능.
 |--------|------|-------------|
 | AMD | RX 9070 XT, AI PRO R9700 | dg5R |
 | FuriosaAI | RNGD, WARBOY | dg5R |
-
----
-
-## 프로파일
-
-전 제품군 공통: `checks/profiles/gpu_server.json`
-
-Tenstorrent 가속기 탑재 시 tt-kmd/tt-smi/tt-burnin 설치가 `sw_requirements.md`에 명시되어 SW Install 단계에서 처리.
