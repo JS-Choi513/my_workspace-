@@ -1,3 +1,5 @@
 projects/
 outputs/*.tmp
 *.DS_Store
+.*.swp
+.*.swo
